@@ -13,7 +13,21 @@ app.use("/", genl_routes);
 app.use("/customer",session({secret:"fingerprint_customer",resave: true, saveUninitialized: true}))
 
 app.use("/customer/auth/*", function auth(req,res,next){
-//Write the authenication mechanism here
+    if(req.session.authorization) {
+        let token = req.session.authorization['accessToken']; // Access Token
+        jwt.verify(token, "access",(err,user)=>{
+            if(!err){
+                req.query.username = user.data.username;
+                req.query.password = user.data.password;
+                next();
+            }
+            else{
+                return res.status(403).json({message: "User not authenticated"})
+            }
+         });
+     } else {
+         return res.status(403).json({message: "User not logged in"})
+     }
 });
 
 app.use("/customer", customer_routes);
